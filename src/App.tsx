@@ -1,14 +1,49 @@
-
+import { useState } from "react";
 import { Button } from "./components/ui/button";
-import { FileVideo, Github, Upload, Wand2 } from "lucide-react";
+import { Github, Wand2 } from "lucide-react";
 import { Separator } from "./components/ui/separator";
 import { Textarea } from "./components/ui/textarea";
 import { Label } from "./components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select";
 import TemperatureSelector from "./components/temperature-selector";
+import VideoInputForm from "./components/video-input-form";
+import PromptSelect from "./components/prompt-select";
+import {useCompletion} from 'ai/react'
+
+
 
 function App() {
-  
+  const [sliderValue, setSliderValue] = useState([0.5]);
+  const [videoId, setVideoId] = useState<string | null>(null);
+
+  // Função para lidar com a mudança de valor do slider
+  const handleSliderChange = (value: number[]) => {
+    setSliderValue(value);
+  };
+
+  const {
+    input,
+    setInput,
+    handleInputChange,
+    handleSubmit,
+    completion,
+    isLoading
+  } = useCompletion({
+    api: 'http://localhost:3333/ai/complete',
+    body: {
+      videoId,
+      temperature: sliderValue[0]
+    },
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -35,11 +70,14 @@ function App() {
             <Textarea
               className="resize-none p-4 leading-relaxed"
               placeholder="Inclua o prompt para a IA.."
+              value={input}
+              onChange={handleInputChange}
             />
             <Textarea
               className="resize-none p-4 leading-relaxed"
               placeholder="Resultado gerado pela IA.."
               readOnly
+              value={completion}
             />
           </div>
           <p className="text-sm text-muted-foreground">
@@ -50,56 +88,14 @@ function App() {
           </p>
         </div>
         <aside className="w-80 space-y-6">
-          <form className="space-y-6">
-            <label
-              className="border flex rounded-md aspect-video cursor-pointer border-dashed text-sm flex-col gap-2 items-center justify-center text-muted-foreground hover:bg-primary/5"
-              htmlFor="video"
-            >
-              <FileVideo className="w-4 h-4" />
-              Selecione um video
-            </label>
-
-            <input
-              type="file"
-              name="video"
-              id="video"
-              accept="video/mp4"
-              className="sr-only"
-            />
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label htmlFor="transcription-prompt">
-                Prompt de transcrição
-              </Label>
-              <Textarea
-                id="transcription-prompt"
-                className="h-20 leading-relaxed resize-none"
-                placeholder="Inclua palavras-chave mencionadas no vídeo separados por vírgula (,)"
-              />
-            </div>
-
-            <Button className="w-full" type="submit">
-              Carregar vídeo
-              <Upload className="w-4 h-4 ml-2" />
-            </Button>
-          </form>
+          <VideoInputForm onVideoUploaded={setVideoId} />
 
           <Separator />
 
-          <form className="space-y-6">
-          <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
               <Label>Prompt</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um prompt" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="title">Título do youtube</SelectItem>
-                  <SelectItem value="description">Descrição do youtube</SelectItem>
-                </SelectContent>
-              </Select>
+              <PromptSelect onPromptSelected={setInput} />
             </div>
 
             <div className="space-y-2">
@@ -112,16 +108,18 @@ function App() {
                   <SelectItem value="gpt3.5">gpt 3.5-turbo 16k</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="block text-xs text-muted-foreground italic">Em breve terá mais opções de modelo.</span>
+              <span className="block text-xs text-muted-foreground italic">
+                Em breve terá mais opções de modelo.
+              </span>
             </div>
 
             <Separator />
 
-            <TemperatureSelector defaultValue={[0.5]} />
+            <TemperatureSelector defaultValue={sliderValue} onValueChange={handleSliderChange} />
 
             <Separator />
 
-            <Button className="w-full" type="submit">
+            <Button disabled={isLoading} className="w-full" type="submit">
               Executar
               <Wand2 className="w-4 h-4 ml-2" />
             </Button>

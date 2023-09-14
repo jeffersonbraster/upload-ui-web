@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
 import { SliderProps } from "@radix-ui/react-slider";
@@ -6,10 +6,19 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 interface TemperatureSelectorProps {
   defaultValue: SliderProps["defaultValue"];
+  onValueChange: (value: number[]) => void;
 }
 
-const TemperatureSelector = ({ defaultValue }: TemperatureSelectorProps) => {
-  const [value, setValue] = React.useState(defaultValue);
+
+
+const TemperatureSelector = ({ defaultValue, onValueChange }: TemperatureSelectorProps) => {
+  const [value, setValue] = useState(defaultValue);
+
+  const handleValueChange = (temp: number[]) => {
+    setValue(temp);
+    onValueChange(temp)
+  };
+
   return (
     <div className="grid gap-2 pt-1">
       <HoverCard openDelay={200}>
@@ -25,8 +34,9 @@ const TemperatureSelector = ({ defaultValue }: TemperatureSelectorProps) => {
               min={0}
               max={1}
               step={0.1}
+              value={value}
               defaultValue={value}
-              onValueChange={setValue}
+              onValueChange={handleValueChange}
             />
           </div>
         </HoverCardTrigger>
